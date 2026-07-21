@@ -26,3 +26,11 @@ The app provides:
 - librosa feature extraction
 - OpenAI analysis when `OPENAI_API_KEY` is set
 - Free rule-based reports when no API key is set
+
+Default Render settings:
+
+- Maximum upload: 75 MB
+- Analysis window: first 60 seconds
+- Analysis sample rate: 22050 Hz
+
+The analysis window keeps the free Render instance stable for longer recordings.

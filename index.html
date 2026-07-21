@@ -129,6 +129,7 @@
       function Detail({ report }) {
         if (!report) return e("section", { className: "panel detail placeholder" }, e("h2", null, "Select a report"), e("p", null, "Generated reports will show diagnosis, recommendations, features, and raw JSON."));
         const cards = [
+          ["Analyzed", report.features.analysis_window_seconds + "s"],
           ["Duration", report.features.duration_seconds + "s"],
           ["Sample rate", report.features.sample_rate_hz + " Hz"],
           ["Mean RMS", report.features.loudness.rms_db_mean + " dBFS"],

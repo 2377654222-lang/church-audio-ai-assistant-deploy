@@ -15,6 +15,10 @@ services:
         value: gpt-4o-mini
       - key: MAX_UPLOAD_MB
         value: 75
+      - key: ANALYSIS_SECONDS
+        value: 60
+      - key: ANALYSIS_SAMPLE_RATE
+        value: 22050
 
 databases:
   - name: church-audio-ai-db

@@ -19,6 +19,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, rela
 APP_NAME = "Church Audio AI Assistant"
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a", ".aac", ".flac", ".ogg"}
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "75"))
+ANALYSIS_SECONDS = float(os.getenv("ANALYSIS_SECONDS", "60"))
+ANALYSIS_SAMPLE_RATE = int(os.getenv("ANALYSIS_SAMPLE_RATE", "22050"))
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -86,7 +88,7 @@ def clean_float(value: float, digits: int = 3) -> float:
 
 
 def extract_features(path: str | Path) -> dict:
-    y, sr = librosa.load(path, sr=None, mono=True)
+    y, sr = librosa.load(path, sr=ANALYSIS_SAMPLE_RATE, mono=True, duration=ANALYSIS_SECONDS)
     duration = librosa.get_duration(y=y, sr=sr)
     rms = librosa.feature.rms(y=y)[0]
     rms_db = librosa.amplitude_to_db(rms, ref=1.0)
@@ -106,6 +108,7 @@ def extract_features(path: str | Path) -> dict:
     silence_ratio = float(np.mean(rms_db < -55)) if rms_db.size else 0.0
 
     return {
+        "analysis_window_seconds": clean_float(ANALYSIS_SECONDS, 2),
         "duration_seconds": clean_float(duration, 2),
         "sample_rate_hz": int(sr),
         "loudness": {
