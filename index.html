@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Church Audio AI Assistant</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+      :root { color: #1d2528; background: #f3f5f2; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      button, input { font: inherit; }
+      .app { min-height: 100vh; padding: 24px; display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 18px; }
+      .workspace { display: grid; grid-template-columns: minmax(260px, 360px) minmax(0, 1fr); gap: 18px; min-width: 0; }
+      .panel { background: #fff; border: 1px solid #d9dfdb; border-radius: 8px; box-shadow: 0 12px 30px rgba(31,42,35,.08); }
+      .upload { padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; }
+      .eyebrow { margin: 0 0 10px; color: #60706a; font-size: .78rem; font-weight: 800; text-transform: uppercase; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 12px; font-size: clamp(2rem, 5vw, 3.4rem); line-height: .98; }
+      h2 { margin-bottom: 4px; font-size: 1.25rem; }
+      h3 { margin: 0 0 10px; font-size: .95rem; }
+      .lede, .summary { color: #52615b; line-height: 1.55; }
+      form { display: grid; gap: 14px; }
+      .drop { min-height: 190px; border: 1.5px dashed #9fb0a8; border-radius: 8px; display: grid; place-items: center; align-content: center; gap: 8px; padding: 20px; text-align: center; cursor: pointer; background: #f8faf8; }
+      .drop input { position: absolute; opacity: 0; pointer-events: none; }
+      .drop-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: #22332d; color: #fff; font-size: 1.8rem; }
+      small { color: #6b7873; }
+      .primary { min-height: 48px; border: 0; border-radius: 8px; background: #22332d; color: #fff; font-weight: 800; cursor: pointer; }
+      .primary:disabled { opacity: .7; cursor: progress; }
+      .status, .error { margin: 0; padding: 12px; border-radius: 8px; }
+      .status { background: #e9f5ed; color: #214b32; }
+      .error { background: #fff0ec; color: #8d2e1f; }
+      .list, .detail { min-height: calc(100vh - 48px); overflow: hidden; }
+      .head { height: 58px; padding: 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e1e6e3; }
+      .head h2 { margin: 0; }
+      .rows { max-height: calc(100vh - 106px); overflow: auto; }
+      .row { width: 100%; min-height: 78px; padding: 14px 16px; border: 0; border-bottom: 1px solid #edf0ee; background: #fff; color: inherit; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; cursor: pointer; }
+      .row.active, .row:hover { background: #eef4f1; }
+      .row strong { display: block; overflow-wrap: anywhere; }
+      .meta { display: grid; justify-items: end; gap: 6px; flex: 0 0 auto; }
+      .badge { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border-radius: 999px; font-size: .78rem; font-weight: 800; text-transform: capitalize; }
+      .low { background: #e8f2ee; color: #24543d; }
+      .medium { background: #fff4d8; color: #71510d; }
+      .high { background: #ffe4dc; color: #8d2e1f; }
+      .detail { padding: 22px; overflow: auto; }
+      .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+      .grade { width: 58px; height: 58px; border-radius: 8px; display: grid; place-items: center; background: #22332d; color: #fff; font-size: 1.6rem; font-weight: 900; flex: 0 0 auto; }
+      .metrics { display: grid; grid-template-columns: repeat(6, minmax(100px, 1fr)); gap: 10px; margin: 18px 0 24px; }
+      .metric { min-height: 76px; padding: 12px; border: 1px solid #e1e6e3; border-radius: 8px; background: #fbfcfb; }
+      .metric span { display: block; margin-bottom: 8px; color: #6b7873; font-size: .78rem; }
+      .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      .finding { padding: 14px; border: 1px solid #e1e6e3; border-radius: 8px; margin-bottom: 10px; }
+      .finding div { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+      .finding p { margin: 10px 0 6px; line-height: 1.45; }
+      details { margin-top: 18px; border: 1px solid #e1e6e3; border-radius: 8px; padding: 12px; }
+      pre { overflow: auto; padding: 14px; border-radius: 8px; background: #17201c; color: #e7f1ec; font-size: .82rem; }
+      .placeholder, .empty { padding: 20px; color: #60706a; }
+      @media (max-width: 1120px) { .app, .workspace { grid-template-columns: 1fr; } .list, .detail { min-height: auto; } .rows { max-height: 320px; } }
+      @media (max-width: 720px) { .app { padding: 12px; } .upload, .detail { padding: 16px; } .metrics, .cols { grid-template-columns: 1fr; } .top { align-items: center; } }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      const e = React.createElement;
+      const api = async (path, options) => {
+        const res = await fetch(path, options);
+        if (!res.ok) {
+          let message = res.statusText || "Request failed";
+          try { message = (await res.json()).detail || message; } catch {}
+          throw new Error(message);
+        }
+        return res.json();
+      };
+      function Badge({ value }) { return e("span", { className: "badge " + value }, value); }
+      function Upload({ onUploaded }) {
+        const [file, setFile] = React.useState(null);
+        const [status, setStatus] = React.useState("");
+        const [error, setError] = React.useState("");
+        async function submit(ev) {
+          ev.preventDefault();
+          if (!file) { setError("Choose an audio file first."); return; }
+          const form = new FormData();
+          form.append("file", file);
+          setStatus("Analyzing audio...");
+          setError("");
+          try {
+            const result = await api("/api/uploads", { method: "POST", body: form });
+            setStatus("Report #" + result.report_id + " created with " + result.source + " analysis.");
+            setFile(null);
+            onUploaded(result.report_id);
+          } catch (err) {
+            setStatus("");
+            setError(err.message);
+          }
+        }
+        return e("section", { className: "panel upload" },
+          e("div", null,
+            e("p", { className: "eyebrow" }, "Church Audio AI Assistant"),
+            e("h1", null, "Service audio diagnosis"),
+            e("p", { className: "lede" }, "Upload a worship or sermon recording to generate a structured sound engineer report.")
+          ),
+          e("form", { onSubmit: submit },
+            e("label", { className: "drop" },
+              e("input", { type: "file", accept: "audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg", onChange: ev => setFile(ev.target.files[0] || null) }),
+              e("span", { className: "drop-icon" }, "+"),
+              e("strong", null, file ? file.name : "Select audio file"),
+              e("small", null, "WAV, MP3, M4A, AAC, FLAC, or OGG.")
+            ),
+            e("button", { className: "primary", disabled: status === "Analyzing audio..." }, status === "Analyzing audio..." ? "Analyzing..." : "Generate report")
+          ),
+          status && e("p", { className: "status" }, status),
+          error && e("p", { className: "error" }, error)
+        );
+      }
+      function List({ reports, selected, onSelect }) {
+        return e("section", { className: "panel list" },
+          e("div", { className: "head" }, e("h2", null, "Reports"), e("span", null, reports.length)),
+          e("div", { className: "rows" },
+            reports.map(r => e("button", { key: r.id, className: "row " + (selected === r.id ? "active" : ""), onClick: () => onSelect(r.id) },
+              e("span", null, e("strong", null, r.filename), e("small", null, new Date(r.created_at).toLocaleString())),
+              e("span", { className: "meta" }, e("b", null, r.overall_grade), e(Badge, { value: r.priority }))
+            )),
+            !reports.length && e("p", { className: "empty" }, "No reports yet.")
+          )
+        );
+      }
+      function Detail({ report }) {
+        if (!report) return e("section", { className: "panel detail placeholder" }, e("h2", null, "Select a report"), e("p", null, "Generated reports will show diagnosis, recommendations, features, and raw JSON."));
+        const cards = [
+          ["Duration", report.features.duration_seconds + "s"],
+          ["Sample rate", report.features.sample_rate_hz + " Hz"],
+          ["Mean RMS", report.features.loudness.rms_db_mean + " dBFS"],
+          ["Peak", report.features.loudness.peak_db + " dBFS"],
+          ["Low/Mid", report.features.spectrum.low_to_mid_ratio],
+          ["High/Mid", report.features.spectrum.high_to_mid_ratio],
+        ];
+        const diagnostics = report.report.diagnostics || [];
+        const recs = report.report.recommendations || [];
+        return e("section", { className: "panel detail" },
+          e("div", { className: "top" },
+            e("div", null, e("p", { className: "eyebrow" }, report.source === "openai" ? "OpenAI analysis" : "Free rules analysis"), e("h2", null, report.filename)),
+            e("div", { className: "grade" }, report.report.overall_grade)
+          ),
+          e("p", { className: "summary" }, report.report.summary),
+          e("div", { className: "metrics" }, cards.map(([k, v]) => e("div", { className: "metric", key: k }, e("span", null, k), e("strong", null, v)))),
+          e("div", { className: "cols" },
+            e("div", null, e("h3", null, "Diagnostics"), diagnostics.map((d, i) => e("article", { className: "finding", key: i }, e("div", null, e("strong", null, d.area.replaceAll("_", " ")), e(Badge, { value: d.severity })), e("p", null, d.finding), e("small", null, d.evidence)))),
+            e("div", null, e("h3", null, "Recommendations"), recs.map((r, i) => e("article", { className: "finding", key: i }, e("div", null, e("strong", null, r.title), e(Badge, { value: r.priority })), e("p", null, r.reason))))
+          ),
+          e("details", null, e("summary", null, "Raw JSON report"), e("pre", null, JSON.stringify(report.report, null, 2)))
+        );
+      }
+      function App() {
+        const [reports, setReports] = React.useState([]);
+        const [selected, setSelected] = React.useState(null);
+        const [detail, setDetail] = React.useState(null);
+        async function refresh(preferred) {
+          const data = await api("/api/reports");
+          setReports(data);
+          const next = preferred || selected || (data[0] && data[0].id);
+          setSelected(next || null);
+          if (next) setDetail(await api("/api/reports/" + next));
+        }
+        React.useEffect(() => { refresh().catch(() => setReports([])); }, []);
+        React.useEffect(() => { if (selected) api("/api/reports/" + selected).then(setDetail).catch(() => setDetail(null)); }, [selected]);
+        return e("main", { className: "app" }, e(Upload, { onUploaded: refresh }), e("section", { className: "workspace" }, e(List, { reports, selected, onSelect: setSelected }), e(Detail, { report: detail })));
+      }
+      ReactDOM.createRoot(document.getElementById("root")).render(e(App));
+    </script>
+  </body>
+</html>
